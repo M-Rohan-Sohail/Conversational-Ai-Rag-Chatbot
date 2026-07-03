@@ -1,4 +1,4 @@
-# Conversational AI RAG Chatbot
+# Conversational AI RAG Agent
 
 A voice + text customer-support chatbot built around a hand-rolled Retrieval-Augmented
 Generation (RAG) pipeline. It answers questions by retrieving from a local **ChromaDB**

@@ -1,0 +1,50 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Runtime-generated data ---
+# These are created/written by the app at runtime (chroma_db/ via
+# chromadb.PersistentClient, analytics.db via analytics_db.py,
+# uploaded_data/ via admin_app.py uploads, audio_history/ via app.py/main.py).
+# They should be mounted as volumes, not baked into the image.
+chroma_db/
+uploaded_data/
+audio_history/
+analytics.db
+knowledge.db
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Version control ---
+.git/
+.gitignore
+
+# --- Docker itself ---
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# --- Misc project files not needed inside the image ---
+*.log
+SKILL.md
+README.md

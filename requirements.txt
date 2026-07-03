@@ -1,0 +1,33 @@
+# Core web UI
+streamlit==1.55.0
+
+# Vector store + embeddings
+chromadb==1.1.1
+sentence-transformers==5.2.3
+# NOTE: sentence-transformers pulls in torch as a transitive dependency.
+# The Dockerfile installs a CPU-only torch wheel *before* this file to avoid
+# pulling the much larger CUDA-enabled build from PyPI. If installing this
+# file directly with plain `pip install -r requirements.txt` outside Docker,
+# plain PyPI torch (possibly CUDA-enabled) will be installed instead.
+
+# LLM provider + observability
+openai==2.41.1
+langfuse==4.9.1
+python-dotenv==1.1.1
+
+# Speech-to-text / text-to-speech (used by app.py and main.py)
+faster-whisper==1.2.1
+edge-tts==7.2.7
+pygame==2.6.1
+
+# CLI voice mode only (main.py / input_recoder.py)
+sounddevice==0.5.5
+scipy==1.15.3
+numpy==2.2.6
+
+# Admin dashboard (admin_app.py)
+pandas==2.3.3
+plotly==6.8.0
+
+# Document ingestion
+PyPDF2==3.0.1
