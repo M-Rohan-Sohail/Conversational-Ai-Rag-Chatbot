@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Source Sans Pro", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: transparent;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+    .chat-container {
+      display: flex;
+      align-items: center;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 9999px;
+      padding: 6px 14px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      width: 100%;
+      max-width: 800px;
+      box-sizing: border-box;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .chat-container:focus-within {
+      border-color: #d1d5db;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    input[type="text"] {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      padding: 8px;
+      background: transparent;
+      color: #374151;
+    }
+    input[type="text"]::placeholder {
+      color: #9ca3af;
+    }
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      border-radius: 50%;
+      color: #6b7280;
+      transition: background-color 0.2s, color 0.2s;
+      margin-left: 4px;
+    }
+    button:hover {
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+    .mic-btn.recording {
+      color: #ef4444;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .submit-btn {
+      color: #111827; /* Black arrow like in image */
+    }
+    .stop-btn {
+      color: #ef4444;
+      display: none;
+    }
+    svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <input type="text" id="chat-input" placeholder="Ask anything" />
+    <button id="stop-btn" class="stop-btn" aria-label="Stop Voice" title="Stop Agent Voice">
+      <!-- Stop Square SVG -->
+      <svg viewBox="0 0 24 24">
+        <path d="M6 6h12v12H6z"/>
+      </svg>
+    </button>
+    <button id="mic-btn" class="mic-btn" aria-label="Record voice">
+      <!-- Microphone SVG -->
+      <svg viewBox="0 0 24 24">
+        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+      </svg>
+    </button>
+    <button id="submit-btn" class="submit-btn" aria-label="Submit">
+      <!-- Up Arrow SVG -->
+      <svg viewBox="0 0 24 24">
+        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/>
+      </svg>
+    </button>
+  </div>
+
+  <script>
+    // Streamlit Component Setup
+    function sendMessageToStreamlitClient(type, data) {
+      const outData = Object.assign({
+        isStreamlitMessage: true,
+        type: type,
+      }, data);
+      window.parent.postMessage(outData, "*");
+    }
+
+    function init() {
+      sendMessageToStreamlitClient("streamlit:componentReady", {apiVersion: 1});
+    }
+
+    function setFrameHeight(height) {
+      sendMessageToStreamlitClient("streamlit:setFrameHeight", {height: height});
+    }
+
+    function sendValue(value) {
+      sendMessageToStreamlitClient("streamlit:setComponentValue", {value: value});
+    }
+
+    window.addEventListener("load", function() {
+      init();
+      setTimeout(() => {
+        setFrameHeight(document.body.scrollHeight + 10);
+      }, 100);
+    });
+
+    const input = document.getElementById("chat-input");
+    const micBtn = document.getElementById("mic-btn");
+    const submitBtn = document.getElementById("submit-btn");
+    const stopBtn = document.getElementById("stop-btn");
+
+    stopBtn.addEventListener("click", () => {
+      try {
+        const parentDoc = window.parent.document;
+        const audios = parentDoc.querySelectorAll('audio');
+        audios.forEach(function(a) {
+            a.pause();
+            a.currentTime = 0;
+        });
+        stopBtn.style.display = 'none';
+      } catch (err) {
+        console.error("Error stopping audio:", err);
+      }
+    });
+
+    setInterval(() => {
+      try {
+        const parentDoc = window.parent.document;
+        const audios = parentDoc.querySelectorAll('audio');
+        let isPlaying = false;
+        audios.forEach(a => {
+            if (a.duration > 0 && !a.paused && !a.muted) {
+                isPlaying = true;
+            }
+        });
+        if (isPlaying) {
+            stopBtn.style.display = 'flex';
+        } else {
+            stopBtn.style.display = 'none';
+        }
+      } catch(e) {}
+    }, 500);
+
+    function submitText() {
+      const text = input.value.trim();
+      if (text) {
+        sendValue({ type: "text", data: text });
+        input.value = "";
+      }
+    }
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submitText();
+    });
+
+    submitBtn.addEventListener("click", submitText);
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    micBtn.addEventListener("click", async () => {
+      if (isRecording) {
+        mediaRecorder.stop();
+        micBtn.classList.remove("recording");
+        isRecording = false;
+        input.placeholder = "Ask anything";
+        input.disabled = false;
+      } else {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = () => {
+              const base64Audio = reader.result.split(',')[1];
+              sendValue({ type: "audio", data: base64Audio });
+            };
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          mediaRecorder.start();
+          micBtn.classList.add("recording");
+          isRecording = true;
+          input.placeholder = "Recording... Click mic to stop.";
+          input.disabled = true;
+
+        } catch (err) {
+          console.error("Error accessing microphone:", err);
+          alert("Could not access microphone. Please ensure permissions are granted.");
+        }
+      }
+    });
+  </script>
+</body>
+</html>
